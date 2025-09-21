@@ -11,13 +11,14 @@ class Rectangle(Figure):
     @property
     def perimeter(self) -> float:
         return (self.side_a + self.side_b) * 2
+
     @property
     def area(self) -> float:
         return self.side_a * self.side_b
 
 
-#test
-#from circle import Circle
+# test
+# from circle import Circle
 # r = Rectangle(3,5)
 # c = Circle(2)
 # print(r.perimeter)
