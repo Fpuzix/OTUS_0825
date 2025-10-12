@@ -1,5 +1,5 @@
 import math
-from figure import Figure
+from .figure import Figure
 
 
 class Triangle(Figure):
@@ -30,7 +30,7 @@ class Triangle(Figure):
 # from circle import Circle
 # t = Triangle(3,4,5 )
 # c = Circle(5)
-
+#
 # print(t.perimeter)
 # print(t.area)
 # print(t.add_area(c))
