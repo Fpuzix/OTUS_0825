@@ -17,7 +17,9 @@ from src.circle import Circle
 def test_circle(radius, expected_area, expected_perimeter):
     c = Circle(radius)
     assert c.area == expected_area, f"Wrong result for area with {radius} in Circle"
-    assert c.perimeter == expected_perimeter, f"Wrong result for perimeter with {radius} in Circle"
+    assert c.perimeter == expected_perimeter, (
+        f"Wrong result for perimeter with {radius} in Circle"
+    )
 
 
 @pytest.mark.parametrize(
@@ -27,8 +29,13 @@ def test_circle(radius, expected_area, expected_perimeter):
 )
 def test_rectangle(side_a, side_b, expected_area, expected_perimeter):
     r = Rectangle(side_a, side_b)
-    assert r.area == expected_area, f"Wrong result for area with {side_a}, {side_b} in Rectangle"
-    assert r.perimeter == expected_perimeter, f"Wrong result for perimeter with {side_a}, {side_b} in Rectangle"
+    assert r.area == expected_area, (
+        f"Wrong result for area with {side_a}, {side_b} in Rectangle"
+    )
+    assert r.perimeter == expected_perimeter, (
+        f"Wrong result for perimeter with {side_a}, {side_b} in Rectangle"
+    )
+
 
 def test_triangle(triangle_case):
     a, b, c, expected_per, expected_area = triangle_case
@@ -46,7 +53,9 @@ def test_square(side_a, expected_area, expected_perimeter):
     s = Square(side_a)
     assert isinstance(s, Rectangle)
     assert s.area == expected_area, f"Wrong result for area with {side_a} in Square"
-    assert s.perimeter == expected_perimeter, f"Wrong result for perimetr with {side_a} in Square"
+    assert s.perimeter == expected_perimeter, (
+        f"Wrong result for perimetr with {side_a} in Square"
+    )
 
 
 @pytest.mark.parametrize(
@@ -57,7 +66,9 @@ def test_square(side_a, expected_area, expected_perimeter):
 def test_add_area_sum_and_type(side_a, side_b, radius, expected_area_sum):
     r = Rectangle(side_a, side_b)
     c = Circle(radius)
-    assert c.add_area(r) == expected_area_sum, f"Wrong sum area for Circle and Rectangle"
+    assert c.add_area(r) == expected_area_sum, (
+        f"Wrong sum area for Circle and Rectangle"
+    )
 
 
 @pytest.mark.parametrize(
