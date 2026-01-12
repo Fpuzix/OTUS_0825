@@ -8,13 +8,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 
-# Часть 1
-# 1.1 Написать фикстуру для запуска разных браузеров
-# 1.2 Выбор браузера должен осуществляться путем передачи аргумента командной строки pytest
-# 1.3 По завершению работы тестов должно осуществляться закрытие браузера
-# 1.4 Добавить опцию командной строки, которая указывает базовый URL opencart
-
-
 def pytest_addoption(parser):
     parser.addoption("--browser", default="chrome")
     parser.addoption("--drivers", default=os.path.expanduser("~/Downloads/drivers"))
@@ -50,7 +43,6 @@ def browser(request):
 
     yield driver
     driver.quit()
-    # request.addfinalizer(driver.quit)
     return driver
 
 
@@ -96,7 +88,6 @@ def wait_element(browser):
                 message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
             )
         except TimeoutException:
-            # Вместо падения возвращаем None, чтобы мы могли сами решить, что делать в тесте
             return None
 
     return _wait
