@@ -2,7 +2,17 @@ import pytest
 import os
 
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+
+# Часть 1
+# 1.1 Написать фикстуру для запуска разных браузеров
+# 1.2 Выбор браузера должен осуществляться путем передачи аргумента командной строки pytest
+# 1.3 По завершению работы тестов должно осуществляться закрытие браузера
+# 1.4 Добавить опцию командной строки, которая указывает базовый URL opencart
 
 
 def pytest_addoption(parser):
@@ -32,13 +42,61 @@ def browser(request):
     else:
         raise Exception("Driver not supported")
 
-    driver.get(url)
+    driver.implicitly_wait(5)
+    driver.maximize_window()
 
-    request.addfinalizer(driver.quit)
+    if url:
+        driver.get(url)
 
+    yield driver
+    driver.quit()
+    # request.addfinalizer(driver.quit)
     return driver
 
 
 @pytest.fixture
 def base_url(request):
-    return request.config.getoption("--url")
+    return request.config.getoption("--url").rstrip("/")
+
+
+@pytest.fixture
+def url_catalog(base_url):
+    return f"{base_url}/en-gb/catalog/smartphone"
+
+
+@pytest.fixture
+def url_goods(base_url):
+    return f"{base_url}/en-gb/product/desktops/canon-eos-5d"
+
+
+@pytest.fixture
+def url_administration(base_url):
+    return f"{base_url}/administration/"
+
+
+@pytest.fixture
+def url_registration(base_url):
+    return f"{base_url}/index.php?route=account/register"
+
+
+@pytest.fixture
+def get_wait(browser):
+    def _wait(timeout=10):
+        return WebDriverWait(browser, timeout)
+
+    return _wait
+
+
+@pytest.fixture
+def wait_element(browser):
+    def _wait(locator, timeout=10, poll=0.2, name="element"):
+        try:
+            return WebDriverWait(browser, timeout, poll_frequency=poll).until(
+                EC.visibility_of_element_located(locator),
+                message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
+            )
+        except TimeoutException:
+            # Вместо падения возвращаем None, чтобы мы могли сами решить, что делать в тесте
+            return None
+
+    return _wait
