@@ -43,7 +43,6 @@ def browser(request):
 
     yield driver
     driver.quit()
-    return driver
 
 
 @pytest.fixture
@@ -79,15 +78,11 @@ def get_wait(browser):
     return _wait
 
 
-@pytest.fixture
-def wait_element(browser):
-    def _wait(locator, timeout=10, poll=0.2, name="element"):
-        try:
-            return WebDriverWait(browser, timeout, poll_frequency=poll).until(
-                EC.visibility_of_element_located(locator),
-                message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
-            )
-        except TimeoutException:
-            return None
-
-    return _wait
+def wait_element(browser, locator, timeout=10, poll=0.2, name="element"):
+    try:
+        return WebDriverWait(browser, timeout, poll_frequency=poll).until(
+            EC.visibility_of_element_located(locator),
+            message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
+        )
+    except TimeoutException:
+        return None
