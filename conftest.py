@@ -57,7 +57,7 @@ def url_catalog(base_url):
 
 @pytest.fixture
 def url_goods(base_url):
-    return f"{base_url}/en-gb/product/desktops/canon-eos-5d"
+    return f"{base_url}/en-gb/product/cameras/nikon-d300"
 
 
 @pytest.fixture

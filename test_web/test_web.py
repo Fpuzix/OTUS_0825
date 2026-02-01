@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from conftest import wait_element
+from selenium.webdriver import ActionChains
+import pytest
 
 
 # Главная
@@ -376,3 +378,266 @@ def test_registration(browser, url_registration):
 
     assert success is not None, "Заголовок об успешной регистрации не найден"
     assert "Created" in success.text
+
+
+# ________ ДОП СЦЕНАРИИ_____
+
+
+def test_add_new_product_admin(browser, url_administration):
+    browser.get(url_administration)
+
+    user_field = wait_element(browser, (By.ID, "input-username"), name="Поле логина")
+    user_field.clear()
+    user_field.send_keys("user")
+
+    pass_field = browser.find_element(By.ID, "input-password")
+    pass_field.clear()
+    pass_field.send_keys("bitnami")
+
+    login_button = browser.find_element(By.CSS_SELECTOR, "button[type='submit']")
+    login_button.click()
+
+    wait_element(browser, (By.ID, "nav-profile"), name="Профиль админа")
+
+    catalog_menu = wait_element(
+        browser, (By.CSS_SELECTOR, "#menu-catalog > a"), name="Меню Catalog"
+    )
+    catalog_menu.click()
+
+    products_link = wait_element(
+        browser, (By.LINK_TEXT, "Products"), name="Подменю Products"
+    )
+    browser.execute_script("arguments[0].click();", products_link)
+
+    add_new_btn = wait_element(
+        browser,
+        (
+            By.CSS_SELECTOR,
+            "a[href*='catalog/product.form'], a[href*='catalog/product|add']",
+        ),
+        name="Кнопка Добавить новый",
+    )
+    browser.execute_script(
+        "arguments[0].scrollIntoView({block: 'center'});", add_new_btn
+    )
+    browser.execute_script("arguments[0].click();", add_new_btn)
+
+    time.sleep(1)
+
+    name_field = wait_element(browser, (By.ID, "input-name-1"), name="Product Name")
+    name_field.clear()
+    name_field.send_keys("My New Product 2026")
+
+    meta_field = wait_element(
+        browser, (By.ID, "input-meta-title-1"), name="Meta Tag Title"
+    )
+    meta_field.clear()
+    meta_field.send_keys("Product Meta Title")
+
+    tab_data = wait_element(browser, (By.LINK_TEXT, "Data"), name="Вкладка Data")
+    browser.execute_script("arguments[0].click();", tab_data)
+
+    time.sleep(0.5)
+
+    model_field = wait_element(browser, (By.ID, "input-model"), name="Model")
+    model_field.clear()
+    model_field.send_keys("Model-2026-Test")
+
+    tab_seo = wait_element(browser, (By.LINK_TEXT, "SEO"), name="Вкладка SEO")
+    browser.execute_script("arguments[0].click();", tab_seo)
+
+    time.sleep(0.8)
+
+    seo_field = wait_element(
+        browser,
+        (By.CSS_SELECTOR, "input[name='product_seo_url[0][1]']"),
+        name="SEO Keyword Field",
+    )
+
+    browser.execute_script("arguments[0].scrollIntoView({block: 'center'});", seo_field)
+    seo_field.clear()
+    seo_field.send_keys(f"test-product-{int(time.time())}")
+
+    browser.execute_script("arguments[0].focus();", tab_seo)
+
+    save_button = wait_element(
+        browser,
+        (By.CSS_SELECTOR, "button[form='form-product']"),
+        name="Кнопка Сохранить",
+    )
+
+    browser.execute_script(
+        "arguments[0].scrollIntoView({block: 'center'});", save_button
+    )
+    time.sleep(0.5)
+    browser.execute_script("arguments[0].click();", save_button)
+
+    success_alert = wait_element(
+        browser,
+        (By.CSS_SELECTOR, ".alert-success, .alert-dismissible"),
+        name="Алерт успеха",
+        timeout=10,
+    )
+
+    if success_alert is None:
+        errors = browser.find_elements(By.CSS_SELECTOR, ".text-danger, .is-invalid")
+        error_texts = [err.text for err in errors if err.text]
+        assert success_alert is not None, (
+            f"Товар не сохранен! Найдены ошибки: {error_texts}"
+        )
+
+    assert (
+        "Success" in success_alert.text
+        or "You have modified products" in success_alert.text
+    )
+
+
+def test_delete_product_admin(browser, url_administration):
+    browser.get(url_administration)
+
+    user_field = wait_element(browser, (By.ID, "input-username"), name="Поле логина")
+    user_field.clear()
+    user_field.send_keys("user")
+
+    pass_field = browser.find_element(By.ID, "input-password")
+    pass_field.clear()
+    pass_field.send_keys("bitnami")
+
+    login_button = browser.find_element(By.CSS_SELECTOR, "button[type='submit']")
+    login_button.click()
+
+    wait_element(browser, (By.ID, "nav-profile"), name="Профиль админа")
+
+    catalog_menu = wait_element(browser, (By.CSS_SELECTOR, "#menu-catalog > a"))
+    catalog_menu.click()
+    products_link = wait_element(browser, (By.LINK_TEXT, "Products"))
+    browser.execute_script("arguments[0].click();", products_link)
+
+    product_name = "My New Product 2026"
+
+    filter_name = wait_element(browser, (By.ID, "input-name"), name="Фильтр по имени")
+    filter_name.send_keys(product_name)
+
+    filter_button = browser.find_element(By.ID, "button-filter")
+    filter_button.click()
+    time.sleep(1)
+
+    product_checkbox = wait_element(
+        browser,
+        (
+            By.XPATH,
+            f"//td[contains(text(), '{product_name}')]/preceding-sibling::td/input[@type='checkbox']",
+        ),
+        name="Чекбокс товара",
+    )
+    if not product_checkbox.is_selected():
+        product_checkbox.click()
+
+    delete_button = wait_element(
+        browser,
+        (By.CSS_SELECTOR, "button[data-oc-action*='product|delete'], .btn-danger"),
+        name="Кнопка Удалить",
+    )
+    delete_button.click()
+
+    WebDriverWait(browser, 5).until(EC.alert_is_present())
+    alert = browser.switch_to.alert
+    alert.accept()
+
+    success_alert = wait_element(
+        browser, (By.CSS_SELECTOR, ".alert-success"), name="Алерт успеха удаления"
+    )
+
+    assert "Success" in success_alert.text or "modified" in success_alert.text
+
+    no_results = browser.find_elements(
+        By.XPATH, f"//td[contains(text(), '{product_name}')]"
+    )
+    assert len(no_results) == 0, "Товар всё еще отображается в списке после удаления!"
+
+
+def test_register_new_user(browser, url_registration):
+    browser.get(url_registration)
+
+    wait_element(browser, (By.ID, "input-firstname")).send_keys("Ivan")
+    wait_element(browser, (By.ID, "input-lastname")).send_keys("Testerov")
+
+    email = f"test_user_{int(time.time())}@example.com"
+    browser.find_element(By.ID, "input-email").send_keys(email)
+
+    telephones = browser.find_elements(By.ID, "input-telephone")
+    if telephones:
+        telephones[0].send_keys("1234567890")
+
+    browser.find_element(By.ID, "input-password").send_keys("test_password_2026")
+
+    agree_check = browser.find_element(By.NAME, "agree")
+    browser.execute_script(
+        "arguments[0].scrollIntoView({block: 'center'});", agree_check
+    )
+    time.sleep(0.5)
+    browser.execute_script("arguments[0].click();", agree_check)
+
+    submit_button = browser.find_element(By.CSS_SELECTOR, "button[type='submit']")
+    browser.execute_script("arguments[0].click();", submit_button)
+
+    time.sleep(2)
+
+    header_element = wait_element(browser, (By.CSS_SELECTOR, "h1"))
+    current_h1 = header_element.text
+
+    if current_h1 == "Register Account":
+        error_elements = browser.find_elements(
+            By.CSS_SELECTOR, ".text-danger, .alert-danger, .invalid-feedback"
+        )
+        error_list = [err.text for err in error_elements if err.text]
+
+        if not error_list:
+            pytest.fail(
+                "Форма не была отправлена (ошибок нет, но мы всё еще на странице регистрации)."
+            )
+        else:
+            pytest.fail(f"Регистрация не удалась. Ошибки: {error_list}")
+
+    assert current_h1 == "Your Account Has Been Created!"
+
+
+def test_switch_all_currencies(browser, base_url):
+    browser.get(base_url)
+
+    currencies = [("Euro", "€"), ("Pound Sterling", "£"), ("US Dollar", "$")]
+
+    for currency_name, symbol in currencies:
+        dropdown = wait_element(
+            browser, (By.CSS_SELECTOR, "#form-currency .dropdown-toggle")
+        )
+        browser.execute_script(
+            "arguments[0].scrollIntoView({block: 'center'});", dropdown
+        )
+        dropdown.click()
+
+        time.sleep(0.5)
+
+        currency_option_xpath = f"//ul[@class='dropdown-menu show']//button[contains(text(), '{currency_name}')] | //ul[@class='dropdown-menu show']//a[contains(text(), '{currency_name}')] | //button[contains(@name, '{currency_name[:3].upper()}')]"
+
+        try:
+            btn = WebDriverWait(browser, 5).until(
+                EC.element_to_be_clickable((By.XPATH, currency_option_xpath))
+            )
+
+            btn.click()
+        except:
+            btn = browser.find_element(By.XPATH, currency_option_xpath)
+            browser.execute_script("arguments[0].click();", btn)
+
+        time.sleep(1.5)
+
+        cart_val = wait_element(browser, (By.CSS_SELECTOR, "#header-cart button")).text
+
+        product_price = browser.find_element(By.CSS_SELECTOR, ".price-new, .price").text
+
+        assert symbol in cart_val or symbol in product_price, (
+            f"Валюта {currency_name} не применилась! Ожидали {symbol}. В корзине: {cart_val}, в товаре: {product_price}"
+        )
+
+        print(f"Успешно переключено на {currency_name} ({symbol})")
