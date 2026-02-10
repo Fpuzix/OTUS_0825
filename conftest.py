@@ -1,11 +1,10 @@
-import pytest
 import os
+import pytest
 
 from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
 
 def pytest_addoption(parser):
@@ -57,7 +56,7 @@ def url_catalog(base_url):
 
 @pytest.fixture
 def url_goods(base_url):
-    return f"{base_url}/en-gb/product/desktops/canon-eos-5d"
+    return f"{base_url}/en-gb/product/cameras/nikon-d300"
 
 
 @pytest.fixture
@@ -79,10 +78,7 @@ def get_wait(browser):
 
 
 def wait_element(browser, locator, timeout=10, poll=0.2, name="element"):
-    try:
-        return WebDriverWait(browser, timeout, poll_frequency=poll).until(
-            EC.visibility_of_element_located(locator),
-            message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
-        )
-    except TimeoutException:
-        return None
+    return WebDriverWait(browser, timeout, poll_frequency=poll).until(
+        EC.visibility_of_element_located(locator),
+        message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
+    )
