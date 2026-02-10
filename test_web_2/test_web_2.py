@@ -8,26 +8,30 @@ from pages.currency_page import CurrencyPage
 
 
 # Главная
-def test_home_page_logo(browser):
-    assert HomePage(browser).logo_displayed(), "Лого не найден"
+def test_home_page_logo(browser, base_url):
+    assert HomePage(browser).open(base_url).logo_displayed(), "Лого не найден"
 
 
-def test_banner_displayed(browser):
-    assert HomePage(browser).banner_displayed(), "Баннер не найден"
+def test_banner_displayed(browser, base_url):
+    assert HomePage(browser).open(base_url).banner_displayed(), "Баннер не найден"
 
 
-def test_cart_button(browser):
-    assert HomePage(browser).cart_button_displayed(), "Кнопка корзины не найдена"
+def test_cart_button(browser, base_url):
+    assert HomePage(browser).open(base_url).cart_button_displayed(), (
+        "Кнопка корзины не найдена"
+    )
 
 
-def test_good_button(browser):
-    assert HomePage(browser).macbook_img_displayed(), (
+def test_good_button(browser, base_url):
+    assert HomePage(browser).open(base_url).macbook_img_displayed(), (
         "Кнопка добавления товара не найдена"
     )
 
 
-def test_contact_us(browser):
-    assert HomePage(browser).contact_us_displayed(), "Контакты не найдены"
+def test_contact_us(browser, base_url):
+    assert HomePage(browser).open(base_url).contact_us_displayed(), (
+        "Контакты не найдены"
+    )
 
 
 # Каталог
@@ -61,7 +65,7 @@ def test_footer_link_displayed(browser, url_catalog):
     )
 
 
-# Карточку товара
+# Карточка товара
 def test_good_page_logo(browser, url_goods):
     assert ProductPage(browser).open(url_goods).logo_displayed(), (
         "Лого на карточке товара не найдено"
@@ -90,7 +94,7 @@ def test_good_page_footer_link_displayed(browser, url_goods):
     )
 
 
-# Страницу логина в админку /administration
+# Страница логина в админку (/administration)
 def test_adm_page_logo(browser, url_administration):
     assert AdminLoginPage(browser).open(url_administration).logo_displayed(), (
         "Лого на страницы админ. не найден"
@@ -99,19 +103,19 @@ def test_adm_page_logo(browser, url_administration):
 
 def test_adm_page_fa_home_displayed(browser, url_administration):
     assert AdminLoginPage(browser).open(url_administration).lock_icon_displayed(), (
-        "Иконка дом не найдена"
+        "Иконка замка не найдена"
     )
 
 
 def test_adm_page_username_displayed(browser, url_administration):
     assert (
         AdminLoginPage(browser).open(url_administration).username_field_displayed()
-    ), "Поле ввода юзернейм не найдено"
+    ), "Поле ввода username не найдено"
 
 
-def test_adm_page_btn_cart_displayed(browser, url_administration):
+def test_adm_page_btn_submit_displayed(browser, url_administration):
     assert AdminLoginPage(browser).open(url_administration).submit_button_displayed(), (
-        "Кнопка корзины не найдена"
+        "Кнопка Login не найдена"
     )
 
 
@@ -121,7 +125,7 @@ def test_adm_page_user_ic_displayed(browser, url_administration):
     )
 
 
-# Страницу регистрации пользователя (/index.php?route=account/register)
+# Страница регистрации пользователя (/index.php?route=account/register)
 def test_reg_page_logo(browser, url_registration):
     assert RegistrationPage(browser).open(url_registration).logo_displayed(), (
         "Лого на странице регистрации пользователя не найдена"
@@ -167,8 +171,8 @@ def test_add_random_to_cart(browser, url_catalog):
     ).add_random_product_to_cart_and_assert_in_dropdown()
 
 
-def test_currency_switch_home(browser):
-    HomePage(browser).switch_currency_to_euro_and_assert()
+def test_currency_switch_home(browser, base_url):
+    HomePage(browser).open(base_url).switch_currency_to_euro_and_assert()
 
 
 def test_currency_switch_catalog(browser, url_goods):

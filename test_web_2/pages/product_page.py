@@ -1,6 +1,6 @@
+import re
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 from .base_page import BasePage
 
@@ -12,10 +12,18 @@ class ProductPage(BasePage):
     BUTTON_CART = (By.ID, "button-cart")
     FOOTER_OPENCART = (By.LINK_TEXT, "OpenCart")
 
-    EX_TAX = (By.XPATH, "//li[contains(text(), 'Ex Tax: ')]")
-    PRICE_NEW = (By.CSS_SELECTOR, ".price-new")
-    DROPDOWN_TOGGLE = (By.CSS_SELECTOR, "a.dropdown-toggle")
-    EURO_LINK = (By.XPATH, "//a[contains(., 'Euro')]")
+    EX_TAX = (By.XPATH, "//li[contains(., 'Ex Tax:')]")
+    PRICE_ANY = (By.CSS_SELECTOR, ".price-new, .price")
+
+    DROPDOWN_TOGGLE = (
+        By.CSS_SELECTOR,
+        "#form-currency .dropdown-toggle, a.dropdown-toggle",
+    )
+    EURO_LINK = (By.XPATH, "//a[contains(., 'Euro')] | //button[contains(., 'Euro')]")
+
+    @property
+    def page_marker(self):
+        return self.BUTTON_CART
 
     def logo_displayed(self) -> bool:
         return self.driver.find_element(*self.LOGO).is_displayed()
@@ -33,27 +41,23 @@ class ProductPage(BasePage):
         return self.driver.find_element(*self.FOOTER_OPENCART).is_displayed()
 
     def assert_ex_tax_price_positive(self):
-        price_element = self.wait_visible(self.EX_TAX, name="Цена Ex Tax")
-        clean_price = "".join(c for c in price_element.text if c.isdigit() or c == ".")
-        price_value = float(
-            clean_price
-        )  # если не распарсится — упадёт, и это нормально
+        text = self.text(self.EX_TAX, name="Цена Ex Tax")
+
+        m = re.search(r"(\d+(?:[\.,]\d+)?)", text)
+        assert m, f"Не удалось извлечь число из Ex Tax: '{text}'"
+
+        price_value = float(m.group(1).replace(",", "."))
         assert price_value > 0, f"Цена товара некорректна: {price_value}"
 
     def switch_currency_to_euro_and_assert(self):
-        price_el = self.wait_visible(self.PRICE_NEW, name="Старая цена")
-        initial_text = price_el.text
+        initial_text = self.text(self.PRICE_ANY, name="Цена")
 
-        self.driver.find_element(*self.DROPDOWN_TOGGLE).click()
+        self.click(self.DROPDOWN_TOGGLE, name="Currency dropdown")
+        self.click(self.EURO_LINK, name="Euro")
 
-        euro_link = self.wait_visible(self.EURO_LINK, name="Ссылка Euro")
-        self.js_click(euro_link)
+        self.wait_text_change(self.PRICE_ANY, initial_text, timeout=10, name="Цена")
 
-        WebDriverWait(self.driver, 10).until_not(
-            EC.text_to_be_present_in_element(self.PRICE_NEW, initial_text)
-        )
-
-        new_price_text = self.driver.find_element(*self.PRICE_NEW).text
+        new_price_text = self.driver.find_element(*self.PRICE_ANY).text
         assert "€" in new_price_text, (
             f"Ожидался символ €, но получили: {new_price_text}"
         )

@@ -1,5 +1,4 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 
 from .base_page import BasePage
 
@@ -11,9 +10,16 @@ class HomePage(BasePage):
     MACBOOK_IMG = (By.CSS_SELECTOR, 'img[alt="MacBook"]')
     CONTACT_US = (By.XPATH, '//a[text()="Contact Us"]')
 
-    PRICE_NEW = (By.CSS_SELECTOR, ".price-new")
-    DROPDOWN_TOGGLE = (By.CSS_SELECTOR, "a.dropdown-toggle")
-    EURO_LINK = (By.XPATH, "//a[contains(., 'Euro')]")
+    PRICE_ANY = (By.CSS_SELECTOR, ".price-new, .price")
+    DROPDOWN_TOGGLE = (
+        By.CSS_SELECTOR,
+        "#form-currency .dropdown-toggle, a.dropdown-toggle",
+    )
+    EURO_LINK = (By.XPATH, "//a[contains(., 'Euro')] | //button[contains(., 'Euro')]")
+
+    @property
+    def page_marker(self):
+        return self.LOGO
 
     def logo_displayed(self) -> bool:
         return self.driver.find_element(*self.LOGO).is_displayed()
@@ -31,19 +37,14 @@ class HomePage(BasePage):
         return self.driver.find_element(*self.CONTACT_US).is_displayed()
 
     def switch_currency_to_euro_and_assert(self):
-        price_el = self.wait_visible(self.PRICE_NEW, name="Старая цена")
-        initial_text = price_el.text
+        initial_text = self.text(self.PRICE_ANY, name="Цена")
 
-        self.driver.find_element(*self.DROPDOWN_TOGGLE).click()
+        self.click(self.DROPDOWN_TOGGLE, name="Currency dropdown")
+        self.click(self.EURO_LINK, name="Euro")
 
-        euro_link = self.wait_visible(self.EURO_LINK, name="Ссылка Euro")
-        self.js_click(euro_link)
+        self.wait_text_change(self.PRICE_ANY, initial_text, timeout=10, name="Цена")
 
-        WebDriverWait(self.driver, 10).until(
-            lambda d: d.find_element(*self.PRICE_NEW).text != initial_text
-        )
-
-        new_price_text = self.driver.find_element(*self.PRICE_NEW).text
+        new_price_text = self.driver.find_element(*self.PRICE_ANY).text
         assert "€" in new_price_text, (
             f"Ожидался символ €, но получили: {new_price_text}"
         )
