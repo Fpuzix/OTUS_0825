@@ -1,0 +1,135 @@
+version: '3.9'
+
+services:
+  selenoid1:
+    image: aerokube/selenoid:1.11.3
+    container_name: selenoid1
+    hostname: selenoid1
+    networks:
+      - selenoid1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/browsers.json:/etc/selenoid/browsers.json:ro # C:\Users\F\Desktop\OTUS_2025_08\OTUS_0825
+    command: -container-network selenoid1 -limit 10
+
+  selenoid2:
+    image: aerokube/selenoid:1.11.3
+    container_name: selenoid2
+    hostname: selenoid2
+    networks:
+      - selenoid2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/browsers.json:/etc/selenoid/browsers.json:ro # C:\Users\F\Desktop\OTUS_2025_08\OTUS_0825
+    command: -container-network selenoid2 -limit 10
+
+  ggr:
+    image: aerokube/ggr:1.7.2
+    container_name: ggr
+    hostname: ggr
+    networks:
+      - selenoid1
+      - selenoid2
+    depends_on:
+      - selenoid1
+      - selenoid2
+
+    command: -guests-allowed -guests-quota "test" -verbose
+    volumes:
+      - /root/ggr/test.xml:/etc/grid-router:ro
+
+  ggr_ui:
+    image: aerokube/ggr_ui:1.2.0
+    container_name: ggr_ui
+    hostname: ggr_ui
+    networks:
+      - selenoid1
+      - selenoid2
+    volumes:
+      - /root/ggr/test.xml:/etc/grid-router:ro
+    depends_on:
+      - ggr
+
+  selenoid_ui:
+    image: aerokube/selenoid_ui:1.10.11
+    container_name: selenoid_ui
+    hostname: selenoid_ui
+    networks:
+      - selenoid1
+    command: --selenoid-uri http://ggr_ui:8888
+    volumes:
+      - /root/ggr/test.xml:/etc/grid-router:ro
+    depends_on:
+      - ggr_ui
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    hostname: nginx
+    depends_on:
+      - selenoid_ui
+      - ggr
+    ports:
+      - 80:80
+    volumes:
+      -/root/nginx:/etc/nginx/conf.d:ro
+
+    networks:
+      - selenoid1
+
+  mariadb:
+    image: 'bitnami/mariadb:latest'
+    networks: [selenoid]
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_opencart
+      - MARIADB_DATABASE=bitnami_opencart
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  opencart:
+    image: agridyaev/opencart:4.0.2-3-debian-12-r33
+    networks: [selenoid]
+    ports:
+      - "8081:8080"
+    environment:
+      - OPENCART_DATABASE_HOST=mariadb
+      - OPENCART_DATABASE_PORT_NUMBER=3306
+      - OPENCART_DATABASE_USER=bn_opencart
+      - OPENCART_DATABASE_NAME=bitnami_opencart
+      - ALLOW_EMPTY_PASSWORD=yes
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Контейнер с тестами
+  tests:
+    build: .
+    networks: [selenoid]
+    shm_size: '2gb'
+    depends_on:
+      opencart:
+        condition: service_healthy
+    environment:
+      - PYTHONPATH=/app
+      # Указываем тестам путь к Selenoid через переменную, если твой код её вдруг поддерживает
+      - SELENIUM_REMOTE_URL=http://selenoid:4444/wd/hub
+    command: pytest test_web_2/ -v --browser chrome --url http://opencart:8080/ --reruns 2
+
+
+
+networks:
+  selenoid1:
+    name: selenoid1
+    external: true
+  selenoid2:
+    name: selenoid2
+    external: true
