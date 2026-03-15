@@ -1,8 +1,6 @@
 # OTUS_0825
 
 Запуск:
-docker build -t test_web_3 .
+docker pull selenoid/chrome:128.0
 
-docker run --rm -it --shm-size=2g
-    -v ${PWD}\allure-results:/app/allure-results test_web_3
-    --browser firefox
+docker compose up --build --abort-on-container-exit --exit-code-from tests

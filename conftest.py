@@ -1,10 +1,14 @@
 import os
 import logging
 from pathlib import Path
+
 import pytest
 import allure
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -12,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 def pytest_addoption(parser):
     parser.addoption("--browser", default="chrome")
     parser.addoption("--drivers", default=os.path.expanduser("~/Downloads/drivers"))
-    parser.addoption("--url", default="http://192.168.0.171:8081/")
+    parser.addoption("--url", default="http://opencart:8080/")
 
 
 @pytest.fixture
@@ -21,23 +25,43 @@ def browser(request):
     drivers = request.config.getoption("--drivers")
     url = request.config.getoption("--url")
 
-    if browser_name == "chrome":
-        service = Service()
-        driver = webdriver.Chrome(service=service)
-    elif browser_name == "yandex":
-        options = webdriver.ChromeOptions()
-        service = Service(executable_path=os.path.join(drivers, "yandexdriver.exe"))
-        options.binary_location = (
-            "C:/Users/F/AppData/Local/Yandex/YandexBrowser/Application/browser.exe"
-        )
-        driver = webdriver.Chrome(service=service, options=options)
-    elif browser_name == "firefox":
-        driver = webdriver.Firefox()
+    remote_url = os.getenv("SELENOID_URL") or os.getenv("SELENIUM_REMOTE_URL")
+
+    if remote_url:
+        if browser_name == "chrome":
+            options = ChromeOptions()
+        elif browser_name == "firefox":
+            options = FirefoxOptions()
+        else:
+            raise Exception("Remote driver supports only chrome/firefox")
+
+        options.set_capability("selenoid:options", {"enableVNC": True})
+
+        driver = webdriver.Remote(command_executor=remote_url, options=options)
+        driver.set_window_size(1920, 1080)
+
     else:
-        raise Exception("Driver not supported")
+        if browser_name == "chrome":
+            service = Service()
+            driver = webdriver.Chrome(service=service)
+
+        elif browser_name == "yandex":
+            options = webdriver.ChromeOptions()
+            service = Service(executable_path=os.path.join(drivers, "yandexdriver.exe"))
+            options.binary_location = (
+                "C:/Users/F/AppData/Local/Yandex/YandexBrowser/Application/browser.exe"
+            )
+            driver = webdriver.Chrome(service=service, options=options)
+
+        elif browser_name == "firefox":
+            driver = webdriver.Firefox()
+
+        else:
+            raise Exception("Driver not supported")
+
+        driver.maximize_window()
 
     driver.implicitly_wait(5)
-    driver.maximize_window()
 
     if url:
         driver.get(url)
