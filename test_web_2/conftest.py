@@ -1,8 +1,6 @@
 import os
-import logging
-from pathlib import Path
 import pytest
-import allure
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
@@ -84,45 +82,3 @@ def wait_element(browser, locator, timeout=10, poll=0.2, name="element"):
         EC.visibility_of_element_located(locator),
         message=f"Timeout: {name} not visible after {timeout}s. locator={locator}",
     )
-
-
-def pytest_configure(config):
-    log_file = Path(__file__).with_name("test_run.log")
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[logging.FileHandler(log_file, encoding="utf-8")],
-    )
-
-
-@pytest.hookimpl(hookwrapper=True, tryfirst=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    rep = outcome.get_result()
-
-    if rep.failed and rep.when in ("setup", "call"):
-        driver = item.funcargs.get("browser") or item.funcargs.get("driver")
-        if driver:
-            allure.attach(
-                driver.get_screenshot_as_png(),
-                name="screenshot",
-                attachment_type=allure.attachment_type.PNG,
-            )
-            allure.attach(
-                driver.current_url,
-                name="current_url",
-                attachment_type=allure.attachment_type.TEXT,
-            )
-            allure.attach(
-                driver.page_source,
-                name="page_source",
-                attachment_type=allure.attachment_type.HTML,
-            )
-
-        log_file = Path(__file__).with_name("test_run.log")
-        if log_file.exists():
-            allure.attach(
-                log_file.read_text(encoding="utf-8", errors="ignore"),
-                name="test_run.log",
-                attachment_type=allure.attachment_type.TEXT,
-            )
