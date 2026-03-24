@@ -15,6 +15,10 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def pytest_addoption(parser):
     parser.addoption("--browser", default="chrome")
+    parser.addoption("--browser_version", default=None)  # важно для GGR/selenoid
+    parser.addoption(
+        "--executor", default="auto", choices=["auto", "local", "selenoid", "ggr"]
+    )
     parser.addoption("--drivers", default=os.path.expanduser("~/Downloads/drivers"))
     parser.addoption("--url", default="http://opencart:8080/")
 
@@ -22,12 +26,26 @@ def pytest_addoption(parser):
 @pytest.fixture
 def browser(request):
     browser_name = request.config.getoption("--browser")
+    browser_version = request.config.getoption("--browser_version")
+    executor = request.config.getoption("--executor")
+
     drivers = request.config.getoption("--drivers")
     url = request.config.getoption("--url")
 
     remote_url = os.getenv("SELENOID_URL") or os.getenv("SELENIUM_REMOTE_URL")
 
-    if remote_url:
+    if executor == "local":
+        use_remote = False
+    elif executor in ("selenoid", "ggr"):
+        use_remote = True
+        if not remote_url:
+            raise RuntimeError(
+                "executor задан как remote (selenoid/ggr), но не задан SELENOID_URL/SELENIUM_REMOTE_URL"
+            )
+    else:
+        use_remote = bool(remote_url)
+
+    if use_remote:
         if browser_name == "chrome":
             options = ChromeOptions()
         elif browser_name == "firefox":
@@ -35,7 +53,17 @@ def browser(request):
         else:
             raise Exception("Remote driver supports only chrome/firefox")
 
-        options.set_capability("selenoid:options", {"enableVNC": True})
+        options.set_capability("browserName", browser_name)
+        if browser_version:
+            options.set_capability("browserVersion", browser_version)
+
+        options.set_capability(
+            "selenoid:options",
+            {
+                "enableVNC": True,
+                "screenResolution": "1920x1080x24",
+            },
+        )
 
         driver = webdriver.Remote(command_executor=remote_url, options=options)
         driver.set_window_size(1920, 1080)
