@@ -26,8 +26,9 @@ pipeline {
                 sh '''
                     . venv/bin/activate
                      python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless
-                        --junitxml=reports/junit.xml \
-                        --html=reports/report.html \
+                        --junitxml=junit.xml \
+                        --html=report.html \
+                        --alluredir=allure-results\
                         --cov=src \
                         --cov-report=xml:reports/coverage.xml \
                         --cov-report=html:reports/htmlcov
