@@ -25,7 +25,7 @@ pipeline {
                 echo 'Запуск тестов...'
                 sh '''
                     . venv/bin/activate
-                    pytest tests/ \
+                     python3 -m pytest test_web_5/test_web_5.py
                         --junitxml=reports/junit.xml \
                         --html=reports/report.html \
                         --cov=src \
