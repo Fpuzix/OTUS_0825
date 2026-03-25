@@ -1,11 +1,25 @@
-FROM python:3.12-slim
+FROM jenkins/jenkins:lts-jdk21
 
-WORKDIR /app
+USER root
 
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN apt-get update && \
+    apt-get install -y  python3 python3-pip python3-venv python3-pytest allure &&\
+    apt-get clean
 
-COPY . /app
-ENV PYTHONPATH=/app
+USER jenkins
 
-ENTRYPOINT ["pytest"]
+#FROM python:3.12-slim
+#
+#ENV PYTHONDONTWRITEBYTECODE=1
+#ENV PYTHONUNBUFFERED=1
+#
+#RUN apt-get update && apt-get install -y --no-install-recommends     chromium     firefox-esr     ca-certificates     fonts-liberation     && rm -rf /var/lib/apt/lists/*
+#
+#WORKDIR /app
+#
+#COPY requirements.txt .
+#RUN pip install --no-cache-dir -r requirements.txt
+#
+#COPY . .
+#
+#CMD ["pytest", "-m", "api"]
