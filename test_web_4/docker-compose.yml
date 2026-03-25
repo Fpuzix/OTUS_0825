@@ -112,7 +112,7 @@ services:
     volumes:
       - ./allure-results:/app/allure-results
     entrypoint: ["pytest"]
-    command: ["test_web_4/test_web_4.py","-v","--executor","ggr","--browser","chrome","--browser_version","125.0","--url","http://opencart:8080/","--alluredir=allure-results"]
+    command: ["test_web_4/test_web_5.py","-v","--executor","ggr","--browser","chrome","--browser_version","125.0","--url","http://opencart:8080/","--alluredir=allure-results"]
 
 networks:
   selenoid:
