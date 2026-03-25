@@ -1,63 +1,46 @@
 pipeline {
     agent any
 
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
-    environment {
-        PYTHONUNBUFFERED = '1'
-        BASE_UI_URL = 'https://www.saucedemo.com/'
-        BASE_API_URL = 'https://httpbin.org'
-    }
-
     stages {
         stage('Checkout') {
             steps {
+                echo 'Клонирование репозитория...'
                 checkout scm
             }
         }
 
-        stage('Create venv') {
+        stage('Setup') {
             steps {
-                bat '''
-                if not exist venv (
-                    py -m venv venv
-                )
+                echo 'Установка зависимостей...'
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r requirements.txt
                 '''
             }
         }
 
-        stage('Install dependencies') {
+        stage('Test') {
             steps {
-                bat '''
-                call venv\\Scripts\\activate
-                python -m pip install --upgrade pip
-                pip install -r requirements.txt
+                echo 'Запуск тестов...'
+                sh '''
+                    . venv/bin/activate
+                    pytest tests/ \
+                        --junitxml=reports/junit.xml \
+                        --html=reports/report.html \
+                        --cov=src \
+                        --cov-report=xml:reports/coverage.xml \
+                        --cov-report=html:reports/htmlcov
                 '''
             }
         }
 
-        stage('Run API tests') {
+        stage('Lint') {
             steps {
-                bat '''
-                call venv\\Scripts\\activate
-                pytest tests\\api -m api ^
-                  --base-api-url=%BASE_API_URL% ^
-                  --alluredir=allure-results
-                '''
-            }
-        }
-
-        stage('Run UI tests') {
-            steps {
-                bat '''
-                call venv\\Scripts\\activate
-                pytest tests\\ui -m ui ^
-                  --headless ^
-                  --base-ui-url=%BASE_UI_URL% ^
-                  --alluredir=allure-results
+                echo 'Проверка качества кода...'
+                sh '''
+                    . venv/bin/activate
+                    flake8 src/ tests/ --max-line-length=100 || true
                 '''
             }
         }
@@ -65,99 +48,22 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'artifacts/**/*.*', allowEmptyArchive: true
-            archiveArtifacts artifacts: 'allure-results/**/*.*', allowEmptyArchive: true
-
-            allure([
-                includeProperties: false,
-                jdk: '',
-                results: [[path: 'allure-results']]
+            echo 'Публикация отчетов...'
+            junit 'reports/junit.xml'
+            publishHTML(target: [
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'reports/htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Coverage Report'
             ])
+        }
+        success {
+            echo '✅ Сборка успешна!'
+        }
+        failure {
+            echo '❌ Сборка провалена!'
         }
     }
 }
-
-
-// pipeline {
-//     agent any
-//
-//     options {
-//         timestamps()
-//         disableConcurrentBuilds()
-//     }
-//
-//     environment {
-//         PYTHONUNBUFFERED = '1'
-//         BASE_UI_URL = 'https://www.saucedemo.com/'
-//         BASE_API_URL = 'https://httpbin.org'
-//     }
-//
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 checkout scm
-//             }
-//         }
-//
-//         stage('Create venv') {
-//             steps {
-//                 bat '''
-//                 if not exist venv (
-//                     py -m venv venv
-//                 )
-//                 '''
-//             }
-//         }
-//
-//         stage('Install dependencies') {
-//             steps {
-//                 bat '''
-//                 call venv\\Scripts\\activate
-//                 python -m pip install --upgrade pip
-//                 pip install -r requirements.txt
-//                 '''
-//             }
-//         }
-//
-//         stage('Run API tests') {
-//             steps {
-//                 bat '''
-//                 call venv\\Scripts\\activate
-//                 pytest tests\\api -m api ^
-//                   --base-api-url=%BASE_API_URL% ^
-//                   --alluredir=allure-results
-//                 '''
-//             }
-//             post {
-//                 always {
-//                     junit testResults: 'reports/api-junit.xml', allowEmptyResults: true
-//                 }
-//             }
-//         }
-//
-//         stage('Run UI tests') {
-//             steps {
-//                 bat '''
-//                 call venv\\Scripts\\activate
-//                 pytest tests\\ui -m ui ^
-//                   --headless ^
-//                   --base-ui-url=%BASE_UI_URL% ^
-//                   --alluredir=allure-results
-//                 '''
-//             }
-//         }
-//     }
-//
-//     post {
-//         always {
-//             archiveArtifacts artifacts: 'artifacts/**/*.*', allowEmptyArchive: true
-//             archiveArtifacts artifacts: 'allure-results/**/*.*', allowEmptyArchive: true
-//
-//             allure([
-//                 includeProperties: false,
-//                 jdk: '',
-//                 results: [[path: 'allure-results']]
-//             ])
-//         }
-//     }
-// }
