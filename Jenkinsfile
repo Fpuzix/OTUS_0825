@@ -25,12 +25,28 @@ pipeline {
                 echo 'Запуск тестов...'
                 sh '''
                     . venv/bin/activate
-                    python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless --url "http://opencart:8080" --junitxml=junit.xml --html=report.html --alluredir=allure-results || true
+                    python3 -m pytest test_web_5/test_web_5.py \
+                        --browser chrome \
+                        --headless \
+                        --url "http://opencart:8080" \
+                        --junitxml=junit.xml \
+                        --html=report.html \
+                        --alluredir=allure-results || true
                 '''
             }
         }
 
-
+        stage('Lint') {
+            steps {
+                echo 'Проверка качества кода...'
+                sh '''
+                    . venv/bin/activate
+                    # Устанавливаем flake8 если его нет в requirements.txt
+                    pip install flake8 --break-system-packages || true
+                    flake8 . --exclude venv --max-line-length=100 || true
+                '''
+            }
+        }
     }
 
     post {
