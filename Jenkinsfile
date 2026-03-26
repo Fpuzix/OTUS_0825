@@ -35,7 +35,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo "Запуск тестов на ${params.BROWSER} для ${params.APP_URL}"
-                // Используем двойные кавычки "" для всего блока sh
+
                 sh """
                     . venv/bin/activate
                     python3 -m pytest test_web_5/test_web_5.py \
@@ -49,15 +49,6 @@ pipeline {
                         --alluredir=allure-results || true
                 """
             }
-
-//             steps {
-//                 echo 'Запуск тестов...'
-//                 sh '''
-//                     . venv/bin/activate
-//                     python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless --url "http://opencart:8080" --junitxml=junit.xml --html=report.html --alluredir=allure-results || true
-//                 '''
-//             }
-        }
 
         stage('Lint') {
             steps {
@@ -82,7 +73,7 @@ pipeline {
                    results: [[path: 'allure-results']],
                    commandline: 'allure'
         }
-        success { echo '✅ Сборка успешна!' }
-        failure { echo '❌ Сборка провалена!' }
+        success { echo 'Сборка успешна!' }
+        failure { echo '!!!!!! Сборка провалена !!!!!!' }
     }
 }
