@@ -32,23 +32,23 @@ pipeline {
         }
 
         stage('Test') {
-
             steps {
                 echo "Запуск тестов на ${params.BROWSER} для ${params.APP_URL}"
-                sh '''
+                // Используем двойные кавычки "" для всего блока sh
+                sh """
                     . venv/bin/activate
-                    # Используем переменные ${params.NAME} в команде
                     python3 -m pytest test_web_5/test_web_5.py \
                         --browser ${params.BROWSER} \
-                        --browser_version ${params.BROWSER_VERSION} \
-                        --executor_url ${params.EXECUTOR_URL} \
+                        --browser_version "${params.BROWSER_VERSION}" \
+                        --executor ${params.EXECUTOR_TYPE} \
                         --url ${params.APP_URL} \
                         -n ${params.THREADS} \
                         --headless \
                         --junitxml=junit.xml \
                         --alluredir=allure-results || true
-                '''
+                """
             }
+
 //             steps {
 //                 echo 'Запуск тестов...'
 //                 sh '''
