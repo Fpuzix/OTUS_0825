@@ -50,13 +50,13 @@ pipeline {
     post {
         always {
             echo 'Публикация отчетов...'
-            junit 'reports/junit.xml'
+            junit 'junit.xml'
             publishHTML(target: [
                 allowMissing: false,
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
-                reportDir: 'reports/htmlcov',
-                reportFiles: 'index.html',
+                reportDir: 'htmlcov',
+                reportFiles: 'report.html',
                 reportName: 'Coverage Report'
             ])
         }
