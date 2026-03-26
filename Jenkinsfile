@@ -27,6 +27,7 @@ pipeline {
                     pip install -r requirements.txt
                     pip install pytest-html pytest-cov flake8 || true
                     pip install allure-pytest || true
+                    pip install pytest-xdist
                 '''
             }
         }
