@@ -42,7 +42,8 @@ pipeline {
                 echo 'Проверка качества кода...'
                 sh '''
                     . venv/bin/activate
-                    flake8 src/ tests/ --max-line-length=100 || true
+                    # Проверяем только те папки, которые реально существуют
+                    flake8 . --exclude venv --max-line-length=100 || true
                 '''
             }
         }
@@ -51,21 +52,18 @@ pipeline {
     post {
         always {
             echo 'Публикация отчетов...'
-            // Публикуем стандартный JUnit отчет (графики в Jenkins)
             junit 'junit.xml'
 
-            // Публикуем HTML-отчет самого Pytest
             publishHTML(target: [
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
-                reportDir: '.',          // Отчет лежит в корне воркспейса
+                reportDir: '.',
                 reportFiles: 'report.html',
                 reportName: 'Pytest HTML Report'
             ])
-        }
-    }
 
+        }
         success {
             echo '✅ Сборка успешна!'
         }
