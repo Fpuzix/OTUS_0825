@@ -25,17 +25,17 @@ pipeline {
                     python3 -m venv venv
                     . venv/bin/activate
                     pip install -r requirements.txt
-                    pip install pytest-html pytest-cov flake8 || true
-                    pip install allure-pytest || true
-                    pip install pytest-xdist
+                    pip install pytest-html pytest-cov flake8 allure-pytest pytest-xdist || true
                 '''
             }
         }
 
         stage('Test') {
+            environment {
+                SELENOID_URL = "${params.EXECUTOR_ADDR}"
+            }
             steps {
                 echo "Запуск тестов на ${params.BROWSER} для ${params.APP_URL}"
-
                 sh """
                     . venv/bin/activate
                     python3 -m pytest test_web_5/test_web_5.py \
@@ -49,6 +49,7 @@ pipeline {
                         --alluredir=allure-results || true
                 """
             }
+        }
 
         stage('Lint') {
             steps {
@@ -64,16 +65,17 @@ pipeline {
     post {
         always {
             echo 'Публикация отчетов...'
-
-
             junit 'junit.xml'
-
             allure includeProperties: false,
                    jdk: '',
                    results: [[path: 'allure-results']],
                    commandline: 'allure'
         }
-        success { echo 'Сборка успешна!' }
-        failure { echo '!!!!!! Сборка провалена !!!!!!' }
+        success {
+            echo 'Сборка успешна!'
+        }
+        failure {
+            echo '!!!!!! Сборка провалена !!!!!!'
+        }
     }
 }
