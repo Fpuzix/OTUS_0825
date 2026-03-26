@@ -26,13 +26,12 @@ pipeline {
                 sh '''
                     . venv/bin/activate
                     python3 -m pytest test_web_5/test_web_5.py \
-                        --browser chrome --headless --url "http://opencart:8080" \
+                        --browser chrome \
+                        --headless \
+                        --url "http://opencart:8080" \
                         --junitxml=junit.xml \
                         --html=report.html \
-                        --alluredir=allure-results \
-                        --cov=src \
-                        --cov-report=xml:reports/coverage.xml \
-                        --cov-report=html:reports/htmlcov || true
+                        --alluredir=allure-results || true
                 '''
             }
         }
@@ -42,7 +41,8 @@ pipeline {
                 echo 'Проверка качества кода...'
                 sh '''
                     . venv/bin/activate
-                    # Проверяем только те папки, которые реально существуют
+                    # Устанавливаем flake8 если его нет в requirements.txt
+                    pip install flake8 --break-system-packages || true
                     flake8 . --exclude venv --max-line-length=100 || true
                 '''
             }
