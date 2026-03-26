@@ -25,7 +25,7 @@ pipeline {
                 echo 'Запуск тестов...'
                 sh '''
                     . venv/bin/activate
-                     python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless
+                     python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless --url "http://opencart:8080"
                         --junitxml=junit.xml \
                         --html=report.html \
                         --alluredir=allure-results\
