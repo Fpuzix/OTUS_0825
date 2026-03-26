@@ -15,6 +15,11 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def pytest_addoption(parser):
     parser.addoption("--browser", default="chrome")
+    parser.addoption("--browser_version", default=None)
+    parser.addoption("--headless", action="store_true", help="Run tests in headless mode")
+    parser.addoption(
+        "--executor", default="auto", choices=["auto", "local", "selenoid", "ggr"]
+    )
     parser.addoption("--drivers", default=os.path.expanduser("~/Downloads/drivers"))
     parser.addoption("--url", default="http://opencart:8080/")
 
@@ -22,12 +27,27 @@ def pytest_addoption(parser):
 @pytest.fixture
 def browser(request):
     browser_name = request.config.getoption("--browser")
+    browser_version = request.config.getoption("--browser_version")
+    executor = request.config.getoption("--executor")
     drivers = request.config.getoption("--drivers")
     url = request.config.getoption("--url")
 
+    headless = request.config.getoption("--headless")
+
     remote_url = os.getenv("SELENOID_URL") or os.getenv("SELENIUM_REMOTE_URL")
 
-    if remote_url:
+    if executor == "local":
+        use_remote = False
+    elif executor in ("selenoid", "ggr"):
+        use_remote = True
+        if not remote_url:
+            raise RuntimeError(
+                "executor задан как remote (selenoid/ggr), но не задан SELENOID_URL/SELENIUM_REMOTE_URL"
+            )
+    else:
+        use_remote = bool(remote_url)
+
+    if use_remote:
         if browser_name == "chrome":
             options = ChromeOptions()
         elif browser_name == "firefox":
@@ -35,31 +55,64 @@ def browser(request):
         else:
             raise Exception("Remote driver supports only chrome/firefox")
 
-        options.set_capability("selenoid:options", {"enableVNC": True})
+
+        if headless:
+            options.add_argument("--headless")
+
+        options.set_capability("browserName", browser_name)
+        if browser_version:
+            options.set_capability("browserVersion", browser_version)
+
+        options.set_capability(
+            "selenoid:options",
+            {
+                "enableVNC": True,
+                "screenResolution": "1920x1080x24",
+            },
+        )
 
         driver = webdriver.Remote(command_executor=remote_url, options=options)
         driver.set_window_size(1920, 1080)
 
     else:
+
         if browser_name == "chrome":
+            options = ChromeOptions()
+            if headless:
+                options.add_argument("--headless")
+
+                options.add_argument("--no-sandbox")
+                options.add_argument("--disable-dev-shm-usage")
+
             service = Service()
-            driver = webdriver.Chrome(service=service)
+            driver = webdriver.Chrome(service=service, options=options)
 
         elif browser_name == "yandex":
-            options = webdriver.ChromeOptions()
-            service = Service(executable_path=os.path.join(drivers, "yandexdriver.exe"))
-            options.binary_location = (
-                "C:/Users/F/AppData/Local/Yandex/YandexBrowser/Application/browser.exe"
-            )
+            options = ChromeOptions()
+            if headless:
+                options.add_argument("--headless")
+
+
+            path = os.path.join(drivers, "yandexdriver") if drivers else "yandexdriver"
+            service = Service(executable_path=path)
+
+            options.binary_location = "/usr/bin/yandex-browser"
             driver = webdriver.Chrome(service=service, options=options)
 
         elif browser_name == "firefox":
-            driver = webdriver.Firefox()
+            options = FirefoxOptions()
+            if headless:
+                options.add_argument("-headless")
+            driver = webdriver.Firefox(options=options)
 
         else:
             raise Exception("Driver not supported")
 
-        driver.maximize_window()
+
+        if not headless:
+            driver.maximize_window()
+        else:
+            driver.set_window_size(1920, 1080)
 
     driver.implicitly_wait(5)
 
