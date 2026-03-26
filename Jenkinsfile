@@ -51,7 +51,10 @@ pipeline {
             junit 'junit.xml'
 
 
-            allure includeProperties: false, jdk: '', results: [[path: 'allure-results']]
+            allure includeProperties: false,
+                   jdk: '',
+                   results: [[path: 'allure-results']],
+                   commandline: 'allure'
         }
         success { echo '✅ Сборка успешна!' }
         failure { echo '❌ Сборка провалена!' }
