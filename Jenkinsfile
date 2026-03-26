@@ -1,6 +1,15 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(name: 'BROWSER', choices: ['chrome', 'firefox'], description: 'Браузер')
+        string(name: 'BROWSER_VERSION', defaultValue: '', description: 'Версия (оставь пустой для последней)')
+        string(name: 'APP_URL', defaultValue: 'http://opencart:8080/', description: 'URL Опенкарта')
+        string(name: 'EXECUTOR_ADDR', defaultValue: 'http://selenoid:4444/wd/hub', description: 'Адрес Selenoid/GGR')
+        choice(name: 'EXECUTOR_TYPE', choices: ['local', 'selenoid'], description: 'Где запускать?')
+        string(name: 'THREADS', defaultValue: '1', description: 'Количество потоков')
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -23,13 +32,30 @@ pipeline {
         }
 
         stage('Test') {
+
             steps {
-                echo 'Запуск тестов...'
+                echo "Запуск тестов на ${params.BROWSER} для ${params.APP_URL}"
                 sh '''
                     . venv/bin/activate
-                    python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless --url "http://opencart:8080" --junitxml=junit.xml --html=report.html --alluredir=allure-results || true
+                    # Используем переменные ${params.NAME} в команде
+                    python3 -m pytest test_web_5/test_web_5.py \
+                        --browser ${params.BROWSER} \
+                        --browser_version ${params.BROWSER_VERSION} \
+                        --executor_url ${params.EXECUTOR_URL} \
+                        --url ${params.APP_URL} \
+                        -n ${params.THREADS} \
+                        --headless \
+                        --junitxml=junit.xml \
+                        --alluredir=allure-results || true
                 '''
             }
+//             steps {
+//                 echo 'Запуск тестов...'
+//                 sh '''
+//                     . venv/bin/activate
+//                     python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless --url "http://opencart:8080" --junitxml=junit.xml --html=report.html --alluredir=allure-results || true
+//                 '''
+//             }
         }
 
         stage('Lint') {
