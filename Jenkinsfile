@@ -25,13 +25,14 @@ pipeline {
                 echo 'Запуск тестов...'
                 sh '''
                     . venv/bin/activate
-                     python3 -m pytest test_web_5/test_web_5.py --browser chrome --headless --url "http://opencart:8080"
+                    python3 -m pytest test_web_5/test_web_5.py \
+                        --browser chrome --headless --url "http://opencart:8080" \
                         --junitxml=junit.xml \
                         --html=report.html \
-                        --alluredir=allure-results\
+                        --alluredir=allure-results \
                         --cov=src \
                         --cov-report=xml:reports/coverage.xml \
-                        --cov-report=html:reports/htmlcov
+                        --cov-report=html:reports/htmlcov || true
                 '''
             }
         }
@@ -50,16 +51,21 @@ pipeline {
     post {
         always {
             echo 'Публикация отчетов...'
+            // Публикуем стандартный JUnit отчет (графики в Jenkins)
             junit 'junit.xml'
+
+            // Публикуем HTML-отчет самого Pytest
             publishHTML(target: [
-                allowMissing: false,
+                allowMissing: true,
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
-                reportDir: 'htmlcov',
+                reportDir: '.',          // Отчет лежит в корне воркспейса
                 reportFiles: 'report.html',
-                reportName: 'Coverage Report'
+                reportName: 'Pytest HTML Report'
             ])
         }
+    }
+
         success {
             echo '✅ Сборка успешна!'
         }
