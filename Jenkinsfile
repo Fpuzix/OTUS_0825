@@ -50,7 +50,6 @@ pipeline {
 
             junit 'junit.xml'
 
-
             allure includeProperties: false,
                    jdk: '',
                    results: [[path: 'allure-results']],
