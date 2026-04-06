@@ -16,7 +16,9 @@ from selenium.webdriver.support import expected_conditions as EC
 def pytest_addoption(parser):
     parser.addoption("--browser", default="chrome")
     parser.addoption("--browser_version", default=None)
-    parser.addoption("--headless", action="store_true", help="Run tests in headless mode")
+    parser.addoption(
+        "--headless", action="store_true", help="Run tests in headless mode"
+    )
     parser.addoption(
         "--executor", default="auto", choices=["auto", "local", "selenoid", "ggr"]
     )
@@ -55,7 +57,6 @@ def browser(request):
         else:
             raise Exception("Remote driver supports only chrome/firefox")
 
-
         if headless:
             options.add_argument("--headless")
 
@@ -75,7 +76,6 @@ def browser(request):
         driver.set_window_size(1920, 1080)
 
     else:
-
         if browser_name == "chrome":
             options = ChromeOptions()
             if headless:
@@ -92,7 +92,6 @@ def browser(request):
             if headless:
                 options.add_argument("--headless")
 
-
             path = os.path.join(drivers, "yandexdriver") if drivers else "yandexdriver"
             service = Service(executable_path=path)
 
@@ -107,7 +106,6 @@ def browser(request):
 
         else:
             raise Exception("Driver not supported")
-
 
         if not headless:
             driver.maximize_window()
