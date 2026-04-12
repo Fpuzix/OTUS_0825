@@ -3,8 +3,7 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from conftest import wait_element
-from selenium.webdriver import ActionChains
+from test_web_5.conftest import wait_element
 import pytest
 
 

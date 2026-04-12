@@ -9,7 +9,7 @@ services:
       - selenoid1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /root/browsers.json:/etc/selenoid/browsers.json:ro # C:\Users\F\Desktop\OTUS_2025_08\OTUS_0825
+      - /root/browsers2.json:/etc/selenoid/browsers2.json:ro # C:\Users\F\Desktop\OTUS_2025_08\OTUS_0825
     command: -container-network selenoid1 -limit 10
 
   selenoid2:
@@ -20,7 +20,7 @@ services:
       - selenoid2
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /root/browsers.json:/etc/selenoid/browsers.json:ro # C:\Users\F\Desktop\OTUS_2025_08\OTUS_0825
+      - /root/browsers2.json:/etc/selenoid/browsers2.json:ro # C:\Users\F\Desktop\OTUS_2025_08\OTUS_0825
     command: -container-network selenoid2 -limit 10
 
   ggr:
