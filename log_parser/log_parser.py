@@ -133,6 +133,5 @@ def main():
         print(f"JSON сохранён в файл: {output_file}")
 
 
-
 if __name__ == "__main__":
     main()
